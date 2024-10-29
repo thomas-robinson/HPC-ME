@@ -24,7 +24,7 @@ RUN . /spack/share/spack/setup-env.sh \
  && sed -i 's/module/spack/' /opt/spack-environment/loads \
  && . /opt/spack-environment/loads \
  && mkdir -p /apps && cd /apps \
- && git clone https://github.com/NOAA-GFDL/GFDL-VortexTracker.git && cd /apps/GFDL-VortexTracker/src \
+ && git clone https://github.com/NOAA-GFDL/GFDL-VortexTracker.git && cd /apps/GFDL-VortexTracker/code/src \
  && cmake .. -DCMAKE_Fortran_COMPILER="ifort" -DCMAKE_C_COMPILER="icc" \
  && make -j 8 VERBOSE=1 \
  && make install
@@ -36,4 +36,12 @@ RUN mkdir -p /apps \
  && echo '. /spack/share/spack/setup-env.sh' >> /apps/run \
  && echo '. /opt/spack-environment/loads' >> /apps/run \
  && echo '${1}'  >> /apps/run
-
+######
+FROM intel/oneapi-runtime:2023.2-devel-ubuntu22.04 as final
+COPY --from=builder /opt/bootstrap /opt/bootstrap
+COPY --from=builder /apps /apps
+COPY --from=builder /spack /spack
+COPY --from=builder /opt/spack-environment/loads /opt/spack-environment/loads
+COPY --from=builder /opt/intel/oneapi/compiler/2023.2.1/linux/compiler/lib/intel64_lin/* /opt/intel/oneapi/lib
+RUN echo . /spack/share/spack/setup-env.sh >> /etc/bash.bashrc && \
+    cat /opt/spack-environment/loads >> /etc/bash.bashrc
